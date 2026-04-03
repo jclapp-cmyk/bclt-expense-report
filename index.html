@@ -368,9 +368,19 @@ async function uploadFileToDrive(fileName, file) {
 }
 
 // ── Gmail ─────────────────────────────────────────────────
-async function sendEmailNotification(data) {
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function sendEmailNotification(data, files) {
   const token = await getAccessToken();
   const subject = "Expense Report: " + data.submittedBy + " - $" + data.total.toFixed(2);
+  const boundary = "bclt_boundary_" + Date.now();
   const itemRows = data.lineItems.map(it =>
     "<tr><td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + it.date + "</td>" +
     "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + (it.account || "-") + "</td>" +
@@ -379,7 +389,7 @@ async function sendEmailNotification(data) {
     "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right'>$" + Number(it.amount).toFixed(2) + "</td></tr>"
   ).join("");
 
-  const body = [
+  const htmlBody = [
     "<div style='font-family:sans-serif;max-width:700px;margin:0 auto'>",
     "<h2 style='color:#1e293b'>BCLT Expense Report</h2>",
     "<table style='margin-bottom:16px;font-size:14px'>",
@@ -401,17 +411,38 @@ async function sendEmailNotification(data) {
     "<div style='text-align:right;padding:12px 10px;font-size:16px;font-weight:700;border-top:2px solid #e2e8f0'>",
     "Total: $" + data.total.toFixed(2) + "</div>",
     data.notes ? "<p style='margin-top:16px'><strong>Notes:</strong> " + data.notes + "</p>" : "",
+    files.length ? "<p style='margin-top:16px;font-size:13px;color:#475569'><strong>" + files.length + " receipt(s) attached</strong></p>" : "",
     "<p style='margin-top:16px;font-size:12px;color:#94a3b8'>Submitted " + new Date().toLocaleString() + " via BCLT Expense Report</p>",
     "</div>"
   ].join("");
 
+  const parts = [
+    "--" + boundary,
+    "Content-Type: text/html; charset=utf-8",
+    "",
+    htmlBody
+  ];
+
+  for (const file of files) {
+    const b64 = await fileToBase64(file);
+    parts.push(
+      "--" + boundary,
+      "Content-Type: " + (file.type || "application/octet-stream"),
+      "Content-Transfer-Encoding: base64",
+      "Content-Disposition: attachment; filename=\"" + file.name + "\"",
+      "",
+      b64
+    );
+  }
+  parts.push("--" + boundary + "--");
+
   const rawEmail = [
     "To: " + NOTIFY_EMAIL,
     "Subject: " + subject,
-    "Content-Type: text/html; charset=utf-8",
     "MIME-Version: 1.0",
+    "Content-Type: multipart/mixed; boundary=" + boundary,
     "",
-    body
+    parts.join("\r\n")
   ].join("\r\n");
 
   const encoded = btoa(unescape(encodeURIComponent(rawEmail))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -510,7 +541,7 @@ async function handleSubmit() {
     // Send email notification
     if (NOTIFY_EMAIL) {
       showStatus("info", "Sending email notification...");
-      await sendEmailNotification(data);
+      await sendEmailNotification(data, receiptFiles);
     }
 
     showStatus("success", "Expense report uploaded to Google Drive and emailed to " + NOTIFY_EMAIL + "!");
