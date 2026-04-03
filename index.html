@@ -148,8 +148,9 @@
           <thead>
             <tr>
               <th style="width:120px">Date</th>
+              <th style="width:140px">Vendor/Store</th>
               <th style="width:150px">Property/Account</th>
-              <th style="width:170px">Category</th>
+              <th style="width:160px">Category</th>
               <th>Description</th>
               <th class="amt" style="width:110px">Amount ($)</th>
               <th style="width:40px"></th>
@@ -229,7 +230,7 @@ function init() {
 // ── Line items ────────────────────────────────────────────
 function addItem() {
   const id = ++itemIdCounter;
-  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), account: "", category: CATEGORIES[0], description: "", amount: "" });
+  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), vendor: "", account: "", category: CATEGORIES[0], description: "", amount: "" });
   renderItems();
 }
 
@@ -260,6 +261,7 @@ function renderItems() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><input type="date" class="td-input" value="${item.date}" onchange="updateItem(${item.id},'date',this.value)" /></td>
+      <td><input class="td-input" value="${escapeHtml(item.vendor)}" placeholder="e.g. Home Depot" oninput="updateItem(${item.id},'vendor',this.value)" /></td>
       <td><input class="td-input" value="${escapeHtml(item.account)}" placeholder="e.g. Wharf Road" oninput="updateItem(${item.id},'account',this.value)" /></td>
       <td><select class="td-input" style="cursor:pointer" onchange="updateItem(${item.id},'category',this.value)">
         ${CATEGORIES.map(c => `<option${c === item.category ? " selected" : ""}>${c}</option>`).join("")}
@@ -383,6 +385,7 @@ async function sendEmailNotification(data, files) {
   const boundary = "bclt_boundary_" + Date.now();
   const itemRows = data.lineItems.map(it =>
     "<tr><td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + it.date + "</td>" +
+    "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + (it.vendor || "-") + "</td>" +
     "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + (it.account || "-") + "</td>" +
     "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + it.category + "</td>" +
     "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + it.description + "</td>" +
@@ -401,6 +404,7 @@ async function sendEmailNotification(data, files) {
     "<table style='width:100%;border-collapse:collapse;font-size:14px'>",
     "<thead><tr style='background:#f1f5f9'>",
     "<th style='padding:8px 10px;text-align:left'>Date</th>",
+    "<th style='padding:8px 10px;text-align:left'>Vendor/Store</th>",
     "<th style='padding:8px 10px;text-align:left'>Property/Account</th>",
     "<th style='padding:8px 10px;text-align:left'>Category</th>",
     "<th style='padding:8px 10px;text-align:left'>Description</th>",
@@ -467,16 +471,16 @@ function formatReport(data) {
     "Date range:   " + data.periodStart + " to " + data.periodEnd,
     "Purpose:      " + data.purpose,
     div, "", "LINE ITEMS", div,
-    "Date         Property/Account     Category               Description                  Amount",
-    "\u2500".repeat(95),
+    "Date         Vendor/Store         Property/Account     Category             Description                  Amount",
+    "\u2500".repeat(115),
   ];
   for (const it of data.lineItems) {
     lines.push(
-      it.date.padEnd(13) + (it.account || "").padEnd(21) + it.category.padEnd(23) + it.description.padEnd(29) + ("$" + Number(it.amount).toFixed(2)).padStart(10)
+      it.date.padEnd(13) + (it.vendor || "").padEnd(21) + (it.account || "").padEnd(21) + it.category.padEnd(21) + it.description.padEnd(29) + ("$" + Number(it.amount).toFixed(2)).padStart(10)
     );
   }
-  lines.push("\u2500".repeat(95));
-  lines.push("".padEnd(83) + ("$" + data.total.toFixed(2)).padStart(11));
+  lines.push("\u2500".repeat(115));
+  lines.push("".padEnd(103) + ("$" + data.total.toFixed(2)).padStart(11));
   lines.push("");
   if (data.notes) lines.push("NOTES", div, data.notes, "");
   lines.push("Report generated: " + new Date().toISOString());
