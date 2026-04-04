@@ -47,6 +47,9 @@
     /* Buttons */
     .add-btn { padding: 0.45rem 1rem; background: #f1f5f9; border: 1px dashed #94a3b8; border-radius: 8px; color: #475569; font-size: 0.85rem; cursor: pointer; margin-top: 0.5rem; font-family: inherit; }
     .add-btn:hover { background: #e2e8f0; }
+    .reimburse-btn { padding: 0.3rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; min-width: 50px; }
+    .reimburse-no { background: #f1f5f9; color: #64748b; }
+    .reimburse-yes { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
     .remove-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.1rem; padding: 0.2rem 0.5rem; border-radius: 4px; }
     .remove-btn:hover { background: #fef2f2; }
 
@@ -152,6 +155,7 @@
               <th style="width:160px">Category</th>
               <th>Description</th>
               <th class="amt" style="width:110px">Amount ($)</th>
+              <th style="width:100px">Reimburse?</th>
               <th style="width:40px"></th>
             </tr>
           </thead>
@@ -199,7 +203,7 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0bs4MY2rl74yh
 
 // ── Categories ────────────────────────────────────────────
 const CATEGORIES = [
-  "Advertising & Marketing", "Appliances", "Equipment", "Events",
+  "Advertising & Marketing", "Equipment & Appliances", "Events",
   "Insurance", "Meals & Entertainment", "Office Supplies",
   "Postage & Shipping", "Professional Services", "Repair & Maintenance",
   "Software & Subscriptions", "Travel", "Utilities", "Other"
@@ -218,7 +222,7 @@ function init() {
 // ── Line items ────────────────────────────────────────────
 function addItem() {
   const id = ++itemIdCounter;
-  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), vendor: "", account: "", category: CATEGORIES[0], description: "", amount: "" });
+  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), vendor: "", account: "", category: CATEGORIES[0], description: "", amount: "", reimburse: "No" });
   renderItems();
 }
 
@@ -256,11 +260,18 @@ function renderItems() {
       </select></td>
       <td><input class="td-input" value="${escapeHtml(item.description)}" placeholder="What was purchased" oninput="updateItem(${item.id},'description',this.value)" /></td>
       <td><input type="number" step="0.01" min="0" class="td-input amt" value="${item.amount}" placeholder="0.00" oninput="updateItem(${item.id},'amount',this.value)" /></td>
+      <td style="text-align:center"><button class="reimburse-btn ${item.reimburse === 'Yes' ? 'reimburse-yes' : 'reimburse-no'}" onclick="toggleReimburse(${item.id})">${item.reimburse}</button></td>
       <td><button class="remove-btn" onclick="removeItem(${item.id})" title="Remove">&times;</button></td>
     `;
     tbody.appendChild(tr);
   }
   updateTotal();
+}
+
+function toggleReimburse(id) {
+  const item = lineItems.find(it => it.id === id);
+  if (item) item.reimburse = item.reimburse === "Yes" ? "No" : "Yes";
+  renderItems();
 }
 
 function escapeHtml(s) {
