@@ -77,10 +77,20 @@
     .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     /* Status */
-    .status { padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 500; margin-bottom: 1rem; }
+    .status { padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
     .status.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
     .status.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     .status.info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+
+    /* Spinner */
+    .spinner { width: 18px; height: 18px; border: 2.5px solid #bfdbfe; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Overlay */
+    .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); z-index: 100; justify-content: center; align-items: center; flex-direction: column; gap: 16px; }
+    .overlay.active { display: flex; }
+    .overlay-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #0f766e; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .overlay-text { font-size: 1rem; font-weight: 600; color: #334155; }
 
     /* Mobile card layout for line items */
     .mobile-item { display: none; }
@@ -204,6 +214,12 @@
     <div class="card">
       <h2>Additional Notes</h2>
       <textarea id="notes" placeholder="Any additional context or notes..."></textarea>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay">
+      <div class="overlay-spinner"></div>
+      <div class="overlay-text" id="overlay-text">Submitting expense report...</div>
     </div>
 
     <!-- Status -->
@@ -378,8 +394,8 @@ function renderFileList() {
 function showStatus(type, message) {
   const el = document.getElementById("status-msg");
   el.className = "status " + type;
-  el.textContent = message;
-  el.style.display = "block";
+  el.innerHTML = (type === "info" ? '<div class="spinner"></div>' : '') + '<span>' + message + '</span>';
+  el.style.display = "flex";
 }
 
 function hideStatus() {
@@ -416,6 +432,7 @@ async function handleSubmit() {
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
   btn.textContent = "Submitting...";
+  document.getElementById("overlay").classList.add("active");
   showStatus("info", "Uploading expense report...");
 
   try {
@@ -465,6 +482,7 @@ async function handleSubmit() {
   } catch (e) {
     showStatus("error", "Submission failed: " + e.message);
   } finally {
+    document.getElementById("overlay").classList.remove("active");
     btn.disabled = false;
     btn.textContent = "Submit Expense Report";
   }
