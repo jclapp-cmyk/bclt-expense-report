@@ -110,6 +110,18 @@
         </div>
       </div>
       <div class="row">
+        <div class="field full">
+          <label>Your Email *</label>
+          <input type="email" id="userEmail" placeholder="e.g. sarah@bolinaslandtrust.org" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field full">
+          <label>Grant</label>
+          <input id="grant" placeholder="e.g. HCD-2026-001" />
+        </div>
+      </div>
+      <div class="row">
         <div class="field">
           <label>Period Start *</label>
           <input type="date" id="periodStart" />
@@ -302,6 +314,7 @@ function fileToBase64(file) {
 // ── Validation & submit ───────────────────────────────────
 function validate() {
   if (!document.getElementById("submittedBy").value.trim()) return "Please enter your name.";
+  if (!document.getElementById("userEmail").value.trim()) return "Please enter your email.";
   if (!document.getElementById("periodStart").value || !document.getElementById("periodEnd").value) return "Please enter the report period dates.";
   if (!document.getElementById("purpose").value.trim()) return "Please enter the purpose of expenses.";
   for (const it of lineItems) {
@@ -323,7 +336,9 @@ async function handleSubmit() {
   try {
     const report = {
       submittedBy: document.getElementById("submittedBy").value.trim(),
+      userEmail: document.getElementById("userEmail").value.trim(),
       department: document.getElementById("department").value.trim(),
+      grant: document.getElementById("grant").value.trim(),
       periodStart: document.getElementById("periodStart").value,
       periodEnd: document.getElementById("periodEnd").value,
       purpose: document.getElementById("purpose").value.trim(),
@@ -372,7 +387,9 @@ async function handleSubmit() {
 
 function clearForm() {
   document.getElementById("submittedBy").value = "";
+  document.getElementById("userEmail").value = "";
   document.getElementById("department").value = "";
+  document.getElementById("grant").value = "";
   document.getElementById("periodStart").value = "";
   document.getElementById("periodEnd").value = "";
   document.getElementById("purpose").value = "";
