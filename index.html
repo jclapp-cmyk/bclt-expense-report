@@ -33,16 +33,17 @@
     textarea { resize: vertical; min-height: 80px; }
     select { cursor: pointer; }
 
-    /* Table */
-    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-    th { text-align: left; padding: 0.5rem 0.6rem; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 2px solid #e2e8f0; }
-    td { padding: 0.4rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-    .td-input {
-      width: 100%; padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 6px;
-      font-size: 0.88rem; background: #f8fafc; outline: none; color: #1e293b; font-family: inherit;
-    }
-    .td-input:focus { border-color: #0f766e; }
-    .amt { text-align: right; }
+    /* Expense item cards */
+    .item-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1rem 0.75rem; margin-bottom: 0.75rem; position: relative; }
+    .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+    .item-num { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+    .item-row { display: flex; gap: 0.75rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+    .item-field { display: flex; flex-direction: column; flex: 1; min-width: 160px; }
+    .item-field.narrow { max-width: 180px; }
+    .item-field label { font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 3px; }
+    .item-field input, .item-field select { padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.88rem; background: #fff; outline: none; color: #1e293b; font-family: inherit; width: 100%; }
+    .item-field input:focus, .item-field select:focus { border-color: #0f766e; }
+    .item-bottom { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 0.25rem; }
 
     /* Buttons */
     .add-btn { padding: 0.45rem 1rem; background: #f1f5f9; border: 1px dashed #94a3b8; border-radius: 8px; color: #475569; font-size: 0.85rem; cursor: pointer; margin-top: 0.5rem; font-family: inherit; }
@@ -92,10 +93,7 @@
     .overlay-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #0f766e; border-radius: 50%; animation: spin 0.7s linear infinite; }
     .overlay-text { font-size: 1rem; font-weight: 600; color: #334155; }
 
-    /* Mobile card layout for line items */
-    .mobile-item { display: none; }
-
-    @media (max-width: 700px) {
+    @media (max-width: 600px) {
       body { padding: 1rem 0.5rem; }
       .container { max-width: 100%; }
       .card { padding: 1rem; }
@@ -105,18 +103,8 @@
       .footer button { width: 100%; }
       .header h1 { font-size: 1.4rem; }
       .header .org { font-size: 0.95rem; }
-
-      /* Hide desktop table, show mobile cards */
-      .desktop-table { display: none; }
-      .mobile-item { display: block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem; margin-bottom: 0.75rem; position: relative; }
-      .mobile-item .mobile-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
-      .mobile-item .mobile-field { display: flex; flex-direction: column; flex: 1; min-width: 120px; }
-      .mobile-item .mobile-field.full { min-width: 100%; }
-      .mobile-item label { font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
-      .mobile-item input, .mobile-item select { padding: 0.5rem; font-size: 0.9rem; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; }
-      .mobile-item .mobile-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; }
-      .mobile-remove { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; color: #ef4444; font-size: 1.2rem; cursor: pointer; padding: 0.2rem 0.5rem; }
-      .mobile-item-num { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem; }
+      .item-field { min-width: 100% !important; }
+      .item-field.narrow { max-width: 100%; }
     }
   </style>
 </head>
@@ -175,24 +163,7 @@
     <!-- Line items -->
     <div class="card">
       <h2>Expense Items</h2>
-      <div class="desktop-table" style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:120px">Date</th>
-              <th style="width:140px">Vendor/Store</th>
-              <th style="width:150px">Property/Account</th>
-              <th style="width:160px">Category</th>
-              <th>Description</th>
-              <th class="amt" style="width:110px">Amount ($)</th>
-              <th style="width:100px">Reimburse?</th>
-              <th style="width:40px"></th>
-            </tr>
-          </thead>
-          <tbody id="line-items"></tbody>
-        </table>
-      </div>
-      <div id="mobile-items"></div>
+      <div id="item-cards"></div>
       <button class="add-btn" onclick="addItem()">+ Add Line Item</button>
       <div class="total-row">
         <span class="total-label">Total:</span>
@@ -246,6 +217,11 @@ const CATEGORIES = [
   "Software & Subscriptions", "Travel", "Utilities", "Other"
 ];
 
+const PAYMENT_METHODS = [
+  "Amalgamated Credit Card", "Bill.com", "Cash", "Check",
+  "Personal Credit Card", "Other"
+];
+
 // ── State ─────────────────────────────────────────────────
 let lineItems = [];
 let receiptFiles = [];
@@ -259,7 +235,7 @@ function init() {
 // ── Line items ────────────────────────────────────────────
 function addItem() {
   const id = ++itemIdCounter;
-  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), vendor: "", account: "", category: CATEGORIES[0], description: "", amount: "", reimburse: "No" });
+  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), vendor: "", account: "", category: CATEGORIES[0], description: "", amount: "", paymentMethod: PAYMENT_METHODS[0], reimburse: "No" });
   renderItems();
 }
 
@@ -284,74 +260,63 @@ function updateTotal() {
 }
 
 function renderItems() {
-  // Desktop table
-  const tbody = document.getElementById("line-items");
-  tbody.innerHTML = "";
-  for (const item of lineItems) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><input type="date" class="td-input" value="${item.date}" onchange="updateItem(${item.id},'date',this.value)" /></td>
-      <td><input class="td-input" value="${escapeHtml(item.vendor)}" placeholder="e.g. Home Depot" oninput="updateItem(${item.id},'vendor',this.value)" /></td>
-      <td><input class="td-input" value="${escapeHtml(item.account)}" placeholder="e.g. Wharf Road" oninput="updateItem(${item.id},'account',this.value)" /></td>
-      <td><select class="td-input" style="cursor:pointer" onchange="updateItem(${item.id},'category',this.value)">
-        ${CATEGORIES.map(c => `<option${c === item.category ? " selected" : ""}>${c}</option>`).join("")}
-      </select></td>
-      <td><input class="td-input" value="${escapeHtml(item.description)}" placeholder="What was purchased" oninput="updateItem(${item.id},'description',this.value)" /></td>
-      <td><input type="number" step="0.01" min="0" class="td-input amt" value="${item.amount}" placeholder="0.00" oninput="updateItem(${item.id},'amount',this.value)" /></td>
-      <td style="text-align:center"><button class="reimburse-btn ${item.reimburse === 'Yes' ? 'reimburse-yes' : 'reimburse-no'}" onclick="toggleReimburse(${item.id})">${item.reimburse}</button></td>
-      <td><button class="remove-btn" onclick="removeItem(${item.id})" title="Remove">&times;</button></td>
-    `;
-    tbody.appendChild(tr);
-  }
+  const container = document.getElementById("item-cards");
+  container.innerHTML = "";
 
-  // Mobile cards
-  const mobileContainer = document.getElementById("mobile-items");
-  mobileContainer.innerHTML = "";
   lineItems.forEach((item, idx) => {
     const card = document.createElement("div");
-    card.className = "mobile-item";
+    card.className = "item-card";
     card.innerHTML = `
-      <div class="mobile-item-num">Item ${idx + 1}</div>
-      ${lineItems.length > 1 ? '<button class="mobile-remove" onclick="removeItem(' + item.id + ')" title="Remove">&times;</button>' : ''}
-      <div class="mobile-row">
-        <div class="mobile-field">
+      <div class="item-header">
+        <span class="item-num">Item ${idx + 1}</span>
+        ${lineItems.length > 1 ? '<button class="remove-btn" onclick="removeItem(' + item.id + ')" title="Remove">&times;</button>' : ''}
+      </div>
+      <div class="item-row">
+        <div class="item-field narrow">
           <label>Date</label>
           <input type="date" value="${item.date}" onchange="updateItem(${item.id},'date',this.value)" />
         </div>
-        <div class="mobile-field">
-          <label>Amount ($)</label>
-          <input type="number" step="0.01" min="0" value="${item.amount}" placeholder="0.00" style="text-align:right" oninput="updateItem(${item.id},'amount',this.value)" />
-        </div>
-      </div>
-      <div class="mobile-row">
-        <div class="mobile-field">
-          <label>Vendor/Store</label>
+        <div class="item-field">
+          <label>Vendor / Store</label>
           <input value="${escapeHtml(item.vendor)}" placeholder="e.g. Home Depot" oninput="updateItem(${item.id},'vendor',this.value)" />
         </div>
-        <div class="mobile-field">
-          <label>Property/Account</label>
+      </div>
+      <div class="item-row">
+        <div class="item-field">
+          <label>Property / Account</label>
           <input value="${escapeHtml(item.account)}" placeholder="e.g. Wharf Road" oninput="updateItem(${item.id},'account',this.value)" />
         </div>
-      </div>
-      <div class="mobile-row">
-        <div class="mobile-field">
+        <div class="item-field">
           <label>Category</label>
           <select onchange="updateItem(${item.id},'category',this.value)">
             ${CATEGORIES.map(c => '<option' + (c === item.category ? ' selected' : '') + '>' + c + '</option>').join('')}
           </select>
         </div>
       </div>
-      <div class="mobile-row">
-        <div class="mobile-field full">
+      <div class="item-row">
+        <div class="item-field">
           <label>Description</label>
           <input value="${escapeHtml(item.description)}" placeholder="What was purchased" oninput="updateItem(${item.id},'description',this.value)" />
         </div>
+        <div class="item-field narrow">
+          <label>Amount ($)</label>
+          <input type="number" step="0.01" min="0" value="${item.amount}" placeholder="0.00" style="text-align:right" oninput="updateItem(${item.id},'amount',this.value)" />
+        </div>
       </div>
-      <div class="mobile-footer">
-        <button class="reimburse-btn ${item.reimburse === 'Yes' ? 'reimburse-yes' : 'reimburse-no'}" onclick="toggleReimburse(${item.id})">Reimburse: ${item.reimburse}</button>
+      <div class="item-row">
+        <div class="item-field">
+          <label>Payment Method</label>
+          <select onchange="updateItem(${item.id},'paymentMethod',this.value)">
+            ${PAYMENT_METHODS.map(m => '<option' + (m === item.paymentMethod ? ' selected' : '') + '>' + m + '</option>').join('')}
+          </select>
+        </div>
+        <div class="item-field narrow">
+          <label>Reimburse?</label>
+          <button class="reimburse-btn ${item.reimburse === 'Yes' ? 'reimburse-yes' : 'reimburse-no'}" onclick="toggleReimburse(${item.id})" style="align-self:flex-start;margin-top:2px">${item.reimburse}</button>
+        </div>
       </div>
     `;
-    mobileContainer.appendChild(card);
+    container.appendChild(card);
   });
 
   updateTotal();
