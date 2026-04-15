@@ -218,7 +218,7 @@ const CATEGORIES = [
 ];
 
 const PAYMENT_METHODS = [
-  "Amalgamated Credit Card", "Bill.com", "Cash", "Check",
+  "Amalgamated Credit Card", "Bill.com", "Bolinas Hardware Charge", "Cash", "Check",
   "Personal Credit Card", "Other"
 ];
 
@@ -235,7 +235,7 @@ function init() {
 // ── Line items ────────────────────────────────────────────
 function addItem() {
   const id = ++itemIdCounter;
-  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), vendor: "", account: "", category: CATEGORIES[0], description: "", amount: "", paymentMethod: PAYMENT_METHODS[0], reimburse: "No" });
+  lineItems.push({ id, date: new Date().toISOString().slice(0, 10), vendor: "", account: "", category: CATEGORIES[0], description: "", amount: "", paymentMethod: PAYMENT_METHODS[0], lastFour: "", reimburse: "No" });
   renderItems();
 }
 
@@ -309,6 +309,10 @@ function renderItems() {
           <select onchange="updateItem(${item.id},'paymentMethod',this.value)">
             ${PAYMENT_METHODS.map(m => '<option' + (m === item.paymentMethod ? ' selected' : '') + '>' + m + '</option>').join('')}
           </select>
+        </div>
+        <div class="item-field narrow">
+          <label>Last 4 of Card</label>
+          <input maxlength="4" pattern="[0-9]*" inputmode="numeric" value="${item.lastFour || ''}" placeholder="0000" oninput="updateItem(${item.id},'lastFour',this.value.replace(/[^0-9]/g,'').slice(0,4))" />
         </div>
         <div class="item-field narrow">
           <label>Reimburse?</label>

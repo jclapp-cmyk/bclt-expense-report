@@ -86,14 +86,14 @@ function formatReport(data) {
     div, "", "LINE ITEMS", div
   ];
 
-  lines.push(pad("Date", 13) + pad("Vendor/Store", 21) + pad("Property/Acct", 21) + pad("Category", 21) + pad("Description", 25) + lpad("Amount", 10) + "  " + pad("Payment Method", 24) + pad("Reimburse?", 10));
-  lines.push("─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────");
+  lines.push(pad("Date", 13) + pad("Vendor/Store", 21) + pad("Property/Acct", 21) + pad("Category", 21) + pad("Description", 25) + lpad("Amount", 10) + "  " + pad("Payment Method", 24) + pad("Last 4", 8) + pad("Reimburse?", 10));
+  lines.push("───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────");
 
   var items = data.lineItems || [];
   for (var i = 0; i < items.length; i++) {
     var it = items[i];
     lines.push(
-      pad(it.date, 13) + pad(it.vendor || "", 21) + pad(it.account || "", 21) + pad(it.category, 21) + pad(it.description, 25) + lpad("$" + Number(it.amount).toFixed(2), 10) + "  " + pad(it.paymentMethod || "-", 24) + pad(it.reimburse || "No", 10)
+      pad(it.date, 13) + pad(it.vendor || "", 21) + pad(it.account || "", 21) + pad(it.category, 21) + pad(it.description, 25) + lpad("$" + Number(it.amount).toFixed(2), 10) + "  " + pad(it.paymentMethod || "-", 24) + pad(it.lastFour || "-", 8) + pad(it.reimburse || "No", 10)
     );
   }
 
@@ -123,6 +123,7 @@ function buildEmailHtml(data, fileCount) {
       "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + it.description + "</td>" +
       "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right'>$" + Number(it.amount).toFixed(2) + "</td>" +
       "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0'>" + (it.paymentMethod || "-") + "</td>" +
+      "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center'>" + (it.lastFour || "-") + "</td>" +
       "<td style='padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center'>" + (it.reimburse || "No") + "</td>" +
       "</tr>";
   }
@@ -145,6 +146,7 @@ function buildEmailHtml(data, fileCount) {
     "<th style='padding:8px 10px;text-align:left'>Description</th>" +
     "<th style='padding:8px 10px;text-align:right'>Amount</th>" +
     "<th style='padding:8px 10px;text-align:left'>Payment Method</th>" +
+    "<th style='padding:8px 10px;text-align:center'>Last 4</th>" +
     "<th style='padding:8px 10px;text-align:center'>Reimburse?</th>" +
     "</tr></thead><tbody>" +
     rows +
